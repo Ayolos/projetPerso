@@ -7,7 +7,7 @@ class Player:
         self.app = app
         self.startPosition = [position.x, position.y]
         self.gridPosition = position
-        self.pixelPosition = self.get_pixelPosition()
+        self.pixelPosition = self.getPosition()
         self.dir = vec(0, 0)
         self.stockDir = None
         self.moove = True
@@ -15,60 +15,59 @@ class Player:
         self.speed = 2
         self.life = 1
 
-    def update(self):
+    def updatePlayer(self):
         if self.moove:
             self.pixelPosition += self.dir*self.speed
-        if self.time_to_move():
+        if self.testMoove():
             if self.stockDir != None:
                 self.dir = self.stockDir
-            self.moove = self.can_move()
+            self.moove = self.collisionWall()
         # Setting grid position in reference to pix pos
-        self.gridPosition[0] = (self.pixelPosition[0]-TOP_BOTTOM_BUFFER +
+        self.gridPosition[0] = (self.pixelPosition[0]-BUFFER +
                                 self.app.cellWidth//2)//self.app.cellWidth+1
-        self.gridPosition[1] = (self.pixelPosition[1]-TOP_BOTTOM_BUFFER +
+        self.gridPosition[1] = (self.pixelPosition[1]-BUFFER +
                                 self.app.cellHeight//2)//self.app.cellHeight+1
-        if self . on_coin():
-            self.eat_coin()
+        if self . onPellets():
+            self.eatPellets()
 
-    def draw(self):
+    def drawPlayer(self):
         pygame.draw.rect(self.app.display, GREEN, (int(self.pixelPosition.x) -8, int(self.pixelPosition.y)-8, 15, 15))
 
-        # Drawing player life
         for x in range(self.life):
             pygame.draw.circle(self.app.display, GREEN,
                                (30 + 20*x, 670 - 15), 7)
 
-    def on_coin(self):
+    def onPellets(self):
         if self.gridPosition in self.app.pellets:
-            if int(self.pixelPosition.x+TOP_BOTTOM_BUFFER//2) % self.app.cellWidth == 0:
+            if int(self.pixelPosition.x+BUFFER//2) % self.app.cellWidth == 0:
                 if self.dir == vec(1, 0) or self.dir == vec(-1, 0):
                     return True
-            if int(self.pixelPosition.y+TOP_BOTTOM_BUFFER//2) % self.app.cellHeight == 0:
+            if int(self.pixelPosition.y+BUFFER//2) % self.app.cellHeight == 0:
                 if self.dir == vec(0, 1) or self.dir == vec(0, -1):
                     return True
         return False
 
-    def eat_coin(self):
+    def eatPellets(self):
         self.app.pellets.remove(self.gridPosition)
         self.curScore += 1
 
-    def move(self, dir):
+    def isMoove(self, dir):
         self.stockDir = dir
 
-    def get_pixelPosition(self):
-        return vec((self.gridPosition[0]*self.app.cellWidth)+TOP_BOTTOM_BUFFER//2+self.app.cellWidth//2,
+    def getPosition(self):
+        return vec((self.gridPosition[0]*self.app.cellWidth)+BUFFER//2+self.app.cellWidth//2,
                    (self.gridPosition[1]*self.app.cellHeight) +
-                   TOP_BOTTOM_BUFFER//2+self.app.cellHeight//2)
+                   BUFFER//2+self.app.cellHeight//2)
 
-    def time_to_move(self):
-        if int(self.pixelPosition.x+TOP_BOTTOM_BUFFER//2) % self.app.cellWidth == 0:
+    def testMoove(self):
+        if int(self.pixelPosition.x+BUFFER//2) % self.app.cellWidth == 0:
             if self.dir == vec(1, 0) or self.dir == vec(-1, 0) or self.dir == vec(0, 0):
                 return True
-        if int(self.pixelPosition.y+TOP_BOTTOM_BUFFER//2) % self.app.cellHeight == 0:
+        if int(self.pixelPosition.y+BUFFER//2) % self.app.cellHeight == 0:
             if self.dir == vec(0, 1) or self.dir == vec(0, -1) or self.dir == vec(0, 0):
                 return True
 
-    def can_move(self):
+    def collisionWall(self):
         for wall in self.app.walls:
             if vec(self.gridPosition+self.dir) == wall:
                 return False

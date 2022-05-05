@@ -13,7 +13,7 @@ class Game():
         pygame.init()
         self.running, self.playing = True, False
         self.DISPLAY_W, self.DISPLAY_H = 610, 670
-        self.MAZE_WIDTH, self.MAZE_HEIGHT = self.DISPLAY_W-TOP_BOTTOM_BUFFER, self.DISPLAY_H-TOP_BOTTOM_BUFFER
+        self.MAZE_WIDTH, self.MAZE_HEIGHT = self.DISPLAY_W-BUFFER, self.DISPLAY_H-BUFFER
 
         self.window = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.display = pygame.display.set_mode(
@@ -99,11 +99,11 @@ class Game():
         self.player.life = 3
         self.player.curScore = 0
         self.player.gridPosition = vec(self.player.startPosition)
-        self.player.pixelPosition = self.player.get_pixelPosition()
+        self.player.pixelPosition = self.player.getPosition()
         self.player.dir *= 0
         for ghost in self . ghost:
             ghost.gridPosition = vec(ghost.startPosition)
-            ghost.pixelPosition = ghost.get_pixelPosition()
+            ghost.pixelPosition = ghost.getPosition()
             ghost.dir *= 0
 
         self.pellets = []
@@ -133,18 +133,18 @@ class Game():
                 self.running = False
             if event . type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    self.player.move(vec(-1, 0))
+                    self.player.isMoove(vec(-1, 0))
                 if event.key == pygame.K_RIGHT:
-                    self.player.move(vec(1, 0))
+                    self.player.isMoove(vec(1, 0))
                 if event.key == pygame.K_UP:
-                    self.player.move(vec(0, -1))
+                    self.player.isMoove(vec(0, -1))
                 if event.key == pygame.K_DOWN:
-                    self.player.move(vec(0, 1))
+                    self.player.isMoove(vec(0, 1))
 
     def playing_update(self):
-        self.player.update()
+        self.player.updatePlayer()
         for ghost in self.ghost:
-            ghost.update()
+            ghost.updateGhost()
         for ghost in self.ghost:
             # Si le joueur touche le fantome
             if ghost.gridPosition == self.player.gridPosition:
@@ -153,13 +153,13 @@ class Game():
     def playing_game(self):
         self.display.fill(BLACK)
         self.display.blit(
-            self.background, (TOP_BOTTOM_BUFFER//2, TOP_BOTTOM_BUFFER//2))
+            self.background, (BUFFER//2, BUFFER//2))
         self.draw_pellets()
         self.menu.draw_text((255, 255, 255), 'SCORE: {}'.format(
             self.player.curScore), 20, 60, 10)
-        self.player.draw()
+        self.player.drawPlayer()
         for ghost in self . ghost:
-            ghost.draw()
+            ghost.drawGhost()
         pygame.display.update()
 
     def remove_life(self):
@@ -172,18 +172,18 @@ class Game():
             self.state = "game over"
         else:
             self.player.gridPosition = vec(self.player.startPosition)
-            self.player.pixelPosition = self.player.get_pixelPosition()
+            self.player.pixelPosition = self.player.getPosition()
             self.player.dir *= 0
             for ghost in self . ghost:
                 ghost.gridPosition = vec(ghost.startPosition)
-                ghost.pixelPosition = ghost.get_pixelPosition()
+                ghost.pixelPosition = ghost.getPosition()
                 ghost.dir *= 0
 
     def draw_pellets(self):
         for pellet in self.pellets:
             pygame.draw.circle(self.display, (124, 123, 7),
-                               (int(pellet.x*self.cellWidth)+self.cellWidth//2+TOP_BOTTOM_BUFFER//2,
-                                int(pellet.y*self.cellHeight)+self.cellHeight//2+TOP_BOTTOM_BUFFER//2), 5)
+                               (int(pellet.x*self.cellWidth)+self.cellWidth//2+BUFFER//2,
+                                int(pellet.y*self.cellHeight)+self.cellHeight//2+BUFFER//2), 5)
 
     def game_over_events(self):
         for event in pygame.event.get():
