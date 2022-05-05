@@ -22,7 +22,6 @@ class Player:
             if self.stockDir != None:
                 self.dir = self.stockDir
             self.moove = self.collisionWall()
-        # Setting grid position in reference to pix pos
         self.gridPosition[0] = (self.pixelPosition[0]-BUFFER +
                                 self.app.cellWidth//2)//self.app.cellWidth+1
         self.gridPosition[1] = (self.pixelPosition[1]-BUFFER +

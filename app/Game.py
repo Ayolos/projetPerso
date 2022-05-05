@@ -19,10 +19,10 @@ class Game():
         self.display = pygame.display.set_mode(
             ((self.DISPLAY_W, self.DISPLAY_H)))
 
-        self.main_menu = MainMenu(self)
+        self.mainMenu = MainMenu(self)
         self.control = ControlMenu(self)
         self.score = ScoreMenu(self)
-        self.curr_menu = self.main_menu
+        self.currMenu = self.mainMenu
         self.menu = Menu(self)
 
 
@@ -35,12 +35,12 @@ class Game():
         self.ghost = []
         self.ghostPosition = []
         self.playerPosition = None
-        self.wall_load()
+        self.loadWall()
         self.player = Player(self, vec(self.playerPosition))
-        self.make_ghost()
+        self.ghostInit()
         self.connection = sqlite3.connect('bdd/score.db')
 
-    def game_loop(self):
+    def runGame(self):
         if self.playing:
             self.run()
 
@@ -52,24 +52,24 @@ class Game():
                     if self.playing == True:
                         self.state = "start"
                         break
-                    self.curr_menu.display_menu()
+                    self.currMenu.display_menu()
             elif self.state == 'start':
-                self.start_events()
-                self.start_game()
+                self.checkStart()
+                self.gameStart()
             elif self.state == 'playing':
-                self.playing_events()
-                self.playing_update()
-                self.playing_game()
+                self.checkPlaying()
+                self.updatePlaying()
+                self.gamePlaying()
             elif self.state == 'game over':
-                self.game_over_events()
-                self.game_over_game()
+                self.checkGameOver()
+                self.gameOver()
             else:
                 self.running = False
             self.clock.tick(60)
         pygame.quit()
         sys.exit()
 
-    def wall_load(self):
+    def loadWall(self):
         self.background = pygame.image.load('image/maze.png')
         self.background = pygame.transform.scale(
         self.background, (self.MAZE_WIDTH, self.MAZE_HEIGHT))
@@ -91,7 +91,7 @@ class Game():
                         pygame.draw.rect(self.background, BLACK, (xCount*self.cellWidth, yCount*self.cellHeight,
                                                                   self.cellWidth, self.cellHeight))
 
-    def make_ghost(self):
+    def ghostInit(self):
         for xCount, position in enumerate(self.ghostPosition):
             self.ghost.append(Ghost(self, vec(position), xCount))
 
@@ -113,7 +113,7 @@ class Game():
                     if char == 'C':
                         self.pellets.append(vec(xCount, yCount))
 
-    def start_events(self):
+    def checkStart(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -121,13 +121,13 @@ class Game():
                 self.reset()
                 self.state = 'playing'
 
-    def start_game(self):
+    def gameStart(self):
         self.display.fill(BLACK)
         self.menu.draw_text((255, 255, 0), 'Appuyer sur Espace pour lancer le jeu',
                             20, self.DISPLAY_W / 2, self.DISPLAY_H / 2)
         pygame.display.update()
 
-    def playing_events(self):
+    def checkPlaying(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -141,20 +141,20 @@ class Game():
                 if event.key == pygame.K_DOWN:
                     self.player.isMoove(vec(0, 1))
 
-    def playing_update(self):
+    def updatePlaying(self):
         self.player.updatePlayer()
         for ghost in self.ghost:
             ghost.updateGhost()
         for ghost in self.ghost:
             # Si le joueur touche le fantome
             if ghost.gridPosition == self.player.gridPosition:
-                self.remove_life()
+                self.looseLife()
 
-    def playing_game(self):
+    def gamePlaying(self):
         self.display.fill(BLACK)
         self.display.blit(
             self.background, (BUFFER//2, BUFFER//2))
-        self.draw_pellets()
+        self.pelletsInit()
         self.menu.draw_text((255, 255, 255), 'SCORE: {}'.format(
             self.player.curScore), 20, 60, 10)
         self.player.drawPlayer()
@@ -162,7 +162,7 @@ class Game():
             ghost.drawGhost()
         pygame.display.update()
 
-    def remove_life(self):
+    def looseLife(self):
         self.player.life -= 1
         if self.player.life == 0:
             cursor = self.connection.cursor()
@@ -179,13 +179,13 @@ class Game():
                 ghost.pixelPosition = ghost.getPosition()
                 ghost.dir *= 0
 
-    def draw_pellets(self):
+    def pelletsInit(self):
         for pellet in self.pellets:
             pygame.draw.circle(self.display, (124, 123, 7),
                                (int(pellet.x*self.cellWidth)+self.cellWidth//2+BUFFER//2,
                                 int(pellet.y*self.cellHeight)+self.cellHeight//2+BUFFER//2), 5)
 
-    def game_over_events(self):
+    def checkGameOver(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -195,13 +195,13 @@ class Game():
                 self.playing = False
                 self.state = 'Menu'
 
-    def game_over_game(self):
+    def gameOver(self):
         self.display.fill(BLACK)
-        quit_text = "appuye sur echap pour revenir au menu"
-        again_text = "appuye sur espace pour rejouer"
+        exitText = "appuye sur echap pour revenir au menu"
+        resetText = "appuye sur espace pour rejouer"
         self.menu.draw_text(RED, "GAME OVER", 35, self.DISPLAY_W//2, 100)
-        self.menu.draw_text((190, 190, 190), again_text, 20,
+        self.menu.draw_text((190, 190, 190), resetText, 20,
                             self.DISPLAY_W//2, self.DISPLAY_H//2)
-        self.menu.draw_text((190, 190, 190), quit_text, 20,
+        self.menu.draw_text((190, 190, 190), exitText, 20,
                             self.DISPLAY_W//2, self.DISPLAY_H//1.5)
         pygame.display.update()
